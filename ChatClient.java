@@ -1,0 +1,132 @@
+//SocketConnection
+import java.net.*;
+// Input Output
+import java.io.*;
+// Frame
+import javax.swing.*;
+import java.awt.event.*;
+// Font
+import java.awt.Font;
+// Date Time
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+
+class ChatClient
+{
+    public static void main(String A[]) throws Exception
+    {
+        /////////////////////////////////
+        // Server Connection
+        /////////////////////////////////
+        
+        Socket sockobj = new Socket("localhost",5100);
+        System.out.println("Client gets connected with server successfully");
+        
+
+
+
+        // Send Message to Servr
+        PrintStream sendmsg = new PrintStream(sockobj.getOutputStream());
+
+        // Message from server
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(sockobj.getInputStream()));
+
+        /////////////////////////////////
+        // Creating Frame
+        /////////////////////////////////
+    
+        JFrame Frame = new JFrame("Client");
+
+        JLabel label1 = new JLabel("Message");
+        label1.setBounds(15,10,120,30);
+
+        JLabel label2 = new JLabel("Server Says : ");
+        label2.setBounds(15,100,350,30);
+
+        JTextField TextSection = new JTextField();
+        TextSection.setBounds(120,10,200,30);
+        
+        Font font = new Font("Arial",Font.BOLD,18); 
+        
+        JButton Button = new JButton("Send");
+        Button.setBounds(140,60,100,30);
+
+        /////////////////////////////////
+        // Client Login File
+        /////////////////////////////////
+      
+        // Data will be not over written
+        FileWriter logFile = new FileWriter("Client_log.txt",true);
+
+        /////////////////////////////////
+        // Display Frame
+        /////////////////////////////////
+       
+        DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        /////////////////////////////////
+        // Display Frame
+        /////////////////////////////////
+
+        Frame.add(label1);
+        Frame.add(label2);
+        Frame.add(TextSection);
+        Frame.add(Button);
+
+        label1.setFont(font);
+        label2.setFont(font);
+
+        Frame.setSize(400,200);
+        Frame.setLayout(null);
+        Frame.setVisible(true);
+        Frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        ///////////////////////////////////////
+        // Reading From Action
+        ///////////////////////////////////////
+    
+        new Thread(()->
+        {
+            try
+            {
+                String str;
+                while((str = buffer.readLine()) != null)
+                {
+                    String time = LocalDateTime.now().format(DTF);
+                    label2.setText("Server Says : "+str);
+                    logFile.write(time+" Server message : "+str+"\n");
+                    logFile.flush();
+                }
+            }
+            catch(Exception eobj)
+            {}
+        }).start();
+
+        ///////////////////////////////////////
+        // Sending Data Action
+        ///////////////////////////////////////
+        
+        Button.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent eobj)
+            {
+                try
+                {
+                    // Message to send
+                    String msg = TextSection.getText();        
+                    sendmsg.println(msg);
+
+                    // saves the details
+                    String time = LocalDateTime.now().format(DTF);
+                    logFile.write(time+" Client : "+msg+"\n");
+                    logFile.flush();
+                
+                    TextSection.setText("");
+                }
+                catch(Exception aobj)
+                {}
+            }
+        });       
+    }   
+}
